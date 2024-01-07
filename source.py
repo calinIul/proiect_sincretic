@@ -35,17 +35,19 @@ def create_hexagon(position, radius=50, flat_top=False) -> HexagonTile:
     return hexagon
 
 
-
-
-def init_hexagons(center=None, n=10, flat_top=False) -> List[HexagonTile]:
+def init_hexagons(center=None, n=50, flat_top=False) -> List[HexagonTile]:
     if center is None:
         screen_width, screen_height = pygame.display.get_surface().get_size()
         center_x, center_y = screen_width // 2, screen_height // 2
         center = create_hexagon(position=(center_x, center_y), flat_top=flat_top)
 
     hexagons = [center]
+    added = 0
+    i = 0
 
     for _ in range(n):
+        if added == n:
+            break
         x, y = center.position
         top = create_hexagon(position=(x, y - 2 * center.minimal_radius), flat_top=flat_top)
         bottom = create_hexagon(position=(x, y + 2 * center.minimal_radius), flat_top=flat_top)
@@ -57,14 +59,14 @@ def init_hexagons(center=None, n=10, flat_top=False) -> List[HexagonTile]:
         to_add = [rbotoom, rtop, top, ltop, lbottom, bottom]
 
         for hexagon in to_add:
-            hexagons.append(hexagon)
+            if hexagon.position not in [h.position for h in hexagons]:
+                hexagons.append(hexagon)
+                added += 1
 
-        center = top  
+        center = to_add[i]
+        i = (i + 1) % 6
 
     return hexagons
-
-
-
 
 
 
@@ -88,7 +90,7 @@ def render(screen, hexagons):
 def main():
 
     pygame.init()
-    screen = pygame.display.set_mode((600, 400))
+    screen = pygame.display.set_mode((1280, 720))
     clock = pygame.time.Clock()
     hexagons = init_hexagons(flat_top=True)
     terminated = False
@@ -101,8 +103,6 @@ def main():
 
         screen.fill((0, 0, 0))
 
-        for i in range(min(hexagon_index + 1, len(hexagons))):
-            hexagons[i].update()
 
         render(screen, hexagons[:hexagon_index + 1])
         clock.tick(5)
