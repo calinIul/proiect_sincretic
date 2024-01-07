@@ -1,4 +1,5 @@
 import random
+import math
 from typing import List
 from typing import Tuple
 
@@ -33,34 +34,22 @@ def create_hexagon(position, radius=50, flat_top=False) -> HexagonTile:
 
     return hexagon
 
-
 def init_hexagons(num_x=10, num_y=10, flat_top=False) -> List[HexagonTile]:
-
     center = create_hexagon(position=(300, 200), flat_top=flat_top)
     hexagons = [center]
-    for x in range(num_y):
-        if x:
 
-            index = 2 if x % 2 == 1 or flat_top else 4
-            position = center.vertices[index]
-            center = create_hexagon(position, flat_top=flat_top)
-            hexagons.append(center)
+    for i in range(6):
+        angle = math.radians(45 * i)  # Angle between hexagon vertices
+        offset = center.radius * 2  # Adjust the offset based on your hexagon size
+        new_x = center.position[0] + offset * math.cos(angle)
+        new_y = center.position[1] + offset * math.sin(angle)
 
-        hexagon = center
-        for i in range(num_x):
-            x, y = hexagon.position  # type: ignore
-            if flat_top:
-                if i % 2 == 1:
-                    position = (x + hexagon.radius * 3 / 2, y - hexagon.minimal_radius)
-                else:
-                    position = (x + hexagon.radius * 3 / 2, y + hexagon.minimal_radius)
-            else:
-                position = (x + hexagon.minimal_radius * 2, y)
-            hexagon = create_hexagon(position, flat_top=flat_top)
-            hexagons.append(hexagon)
+
+        new_position = (new_x, new_y)
+        hexagon = create_hexagon(position=new_position, flat_top=flat_top)
+        hexagons.append(hexagon)
 
     return hexagons
-
 
 def render(screen, hexagons):
 
@@ -77,6 +66,7 @@ def render(screen, hexagons):
     #         neighbour.render_highlight(screen, border_colour=(100, 100, 100))
     #     hexagon.render_highlight(screen, border_colour=(0, 0, 0))
     pygame.display.flip()
+
 
 
 def main():

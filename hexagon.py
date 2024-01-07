@@ -39,6 +39,8 @@ class HexagonTile:
             (x, y + 2 * self.radius),
             (x + minimal_radius, y + 3 * half_radius),
             (x + minimal_radius, y + half_radius),
+            (x + minimal_radius, y - 3 * half_radius),
+
         ]
 
     def compute_neighbours(self, hexagons: List[HexagonTile]) -> List[HexagonTile]:
@@ -84,6 +86,7 @@ class HexagonTile:
 
 
 class FlatTopHexagonTile(HexagonTile):
+
     def compute_vertices(self) -> List[Tuple[float, float]]:
 
         # pylint: disable=invalid-name
@@ -97,6 +100,7 @@ class FlatTopHexagonTile(HexagonTile):
             (x + self.radius, y + 2 * minimal_radius),
             (x + 3 * half_radius, y + minimal_radius),
             (x + self.radius, y),
+
         ]
 
     @property
