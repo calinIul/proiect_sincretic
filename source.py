@@ -34,22 +34,39 @@ def create_hexagon(position, radius=50, flat_top=False) -> HexagonTile:
 
     return hexagon
 
-def init_hexagons(num_x=10, num_y=10, flat_top=False) -> List[HexagonTile]:
-    center = create_hexagon(position=(300, 200), flat_top=flat_top)
+
+
+
+def init_hexagons(center=None, n=10, flat_top=False) -> List[HexagonTile]:
+    if center is None:
+        screen_width, screen_height = pygame.display.get_surface().get_size()
+        center_x, center_y = screen_width // 2, screen_height // 2
+        center = create_hexagon(position=(center_x, center_y), flat_top=flat_top)
+
     hexagons = [center]
 
-    for i in range(6):
-        angle = math.radians(45 * i)  # Angle between hexagon vertices
-        offset = center.radius * 2  # Adjust the offset based on your hexagon size
-        new_x = center.position[0] + offset * math.cos(angle)
-        new_y = center.position[1] + offset * math.sin(angle)
+    for _ in range(n):
+        x, y = center.position
+        top = create_hexagon(position=(x, y - 2 * center.minimal_radius), flat_top=flat_top)
+        bottom = create_hexagon(position=(x, y + 2 * center.minimal_radius), flat_top=flat_top)
+        rbotoom = create_hexagon(position=(x + 3 * center.radius / 2, y + center.minimal_radius), flat_top=flat_top)
+        rtop = create_hexagon(position=(x + 3 * center.radius / 2, y - center.minimal_radius), flat_top=flat_top)
+        lbottom = create_hexagon(position=(x - 3 * center.radius / 2, y + center.minimal_radius), flat_top=flat_top)
+        ltop = create_hexagon(position=(x - 3 * center.radius / 2, y - center.minimal_radius), flat_top=flat_top)
 
+        to_add = [rbotoom, rtop, top, ltop, lbottom, bottom]
 
-        new_position = (new_x, new_y)
-        hexagon = create_hexagon(position=new_position, flat_top=flat_top)
-        hexagons.append(hexagon)
+        for hexagon in to_add:
+            hexagons.append(hexagon)
+
+        center = top  
 
     return hexagons
+
+
+
+
+
 
 def render(screen, hexagons):
 
@@ -66,7 +83,6 @@ def render(screen, hexagons):
     #         neighbour.render_highlight(screen, border_colour=(100, 100, 100))
     #     hexagon.render_highlight(screen, border_colour=(0, 0, 0))
     pygame.display.flip()
-
 
 
 def main():
