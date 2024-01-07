@@ -1,105 +1,115 @@
-import pygame
-import sys
 import random
-import math
+from typing import List
+from typing import Tuple
+
+import pygame
+from hexagon import FlatTopHexagonTile
+from hexagon import HexagonTile
+
+used_colors = []
 
 
-class Hexagon:
-    def __init__(self, row, col):
-        self.row = row
-        self.col = col
-        self.color = None
-        self.neighbors = []
+def get_random_colour(min_=150, max_=255) -> Tuple[int, ...]:
+
+    return tuple(random.choices(list(range(min_, max_)), k=3))
 
 
-def hexa_grid(rows, cols):
-    grid = [[Hexagon(row, col) for col in range(cols)] for row in range(rows)]
-    return grid
+def create_hexagon(position, radius=50, flat_top=False) -> HexagonTile:
+
+    global used_colors
+
+    class_ = FlatTopHexagonTile if flat_top else HexagonTile
+    hexagon = class_(radius, position, colour=get_random_colour())
+
+    neighbor_colors = [neighbor.colour for neighbor in hexagon.compute_neighbours([hexagon])]
+
+    while True:
+        new_color = get_random_colour()
+        if new_color not in neighbor_colors and new_color not in used_colors:
+            break
+
+    hexagon.colour = new_color
+    used_colors.append(new_color)
+
+    return hexagon
 
 
-def colors(grid, colors):
-    for row in grid:
-        for hexagon in row:
+def init_hexagons(num_x=10, num_y=10, flat_top=False) -> List[HexagonTile]:
 
-            colors_pos = set(colors) - {neighbor.color for neighbor in hexagon.neighbors}
+    center = create_hexagon(position=(300, 200), flat_top=flat_top)
+    hexagons = [center]
+    for x in range(num_y):
+        if x:
 
+            index = 2 if x % 2 == 1 or flat_top else 4
+            position = center.vertices[index]
+            center = create_hexagon(position, flat_top=flat_top)
+            hexagons.append(center)
 
-            hexagon.color = random.choice(list(colors_pos))
+        hexagon = center
+        for i in range(num_x):
+            x, y = hexagon.position  # type: ignore
+            if flat_top:
+                if i % 2 == 1:
+                    position = (x + hexagon.radius * 3 / 2, y - hexagon.minimal_radius)
+                else:
+                    position = (x + hexagon.radius * 3 / 2, y + hexagon.minimal_radius)
+            else:
+                position = (x + hexagon.minimal_radius * 2, y)
+            hexagon = create_hexagon(position, flat_top=flat_top)
+            hexagons.append(hexagon)
 
-
-def connect(grid):
-    rows, cols = len(grid), len(grid[0])
-
-    for row in range(rows):
-        for col in range(cols):
-            hexagon = grid[row][col]
-
-
-            neighbor_offsets = [(0, 1), (1, 0), (1, -1), (0, -1), (-1, 0), (-1, 1)]
-
-            for offset in neighbor_offsets:
-                neighbor_row, neighbor_col = row + offset[0], col + offset[1]
-
-                if 0 <= neighbor_row < rows and 0 <= neighbor_col < cols:
-                    hexagon.neighbors.append(grid[neighbor_row][neighbor_col])
-
-
-def generate_hexa_grid(rows, cols, hex_size, offset_x, offset_y):
-    grid = [[Hexagon(row, col) for col in range(cols)] for row in range(rows)]
+    return hexagons
 
 
-    for row in range(rows):
-        for col in range(cols):
-            x = col * (hex_size * 1.5)
-            y = row * (hex_size * math.sqrt(3)) + (col % 2) * (hex_size * math.sqrt(3) / 2)
-            hexagon = grid[row][col]
-            hexagon.position = (x + offset_x, y + offset_y)
+def render(screen, hexagons):
 
-    return grid
+    screen.fill((0, 0, 0))
+    for hexagon in hexagons:
+        hexagon.render(screen)
 
-
-def hexa_draw(screen, color, center, size):
-
-    pygame.draw.polygon(screen, color, [
-        (center[0] + size * math.cos(angle), center[1] + size * math.sin(angle))
-        for angle in [0, 60, 120, 180, 240, 300]
-    ])
-
-
-def grid_draw(screen, grid, hex_size):
-    for row in grid:
-        for hexagon in row:
-            hexa_draw(screen, hexagon.color, hexagon.position, hex_size)
-
+    # mouse_pos = pygame.mouse.get_pos()
+    # colliding_hexagons = [
+    #     hexagon for hexagon in hexagons if hexagon.collide_with_point(mouse_pos)
+    # ]
+    # for hexagon in colliding_hexagons:
+    #     for neighbour in hexagon.compute_neighbours(hexagons):
+    #         neighbour.render_highlight(screen, border_colour=(100, 100, 100))
+    #     hexagon.render_highlight(screen, border_colour=(0, 0, 0))
+    pygame.display.flip()
 
 
 def main():
+
     pygame.init()
+    screen = pygame.display.set_mode((600, 400))
+    clock = pygame.time.Clock()
+    hexagons = init_hexagons(flat_top=True)
+    terminated = False
+    hexagon_index = 0
 
-    rows, cols = 5, 5
-    colors = [(255, 0, 0), (0, 0, 255), (0, 255, 0), (255, 255, 0)]
-    hex_size = 30
-    offset_x, offset_y = 50, 50
-
-    grid = generate_hexa_grid(rows, cols, hex_size, offset_x, offset_y)
-    connect(grid)
-    colors(grid, colors)
-
-    screen_size = (
-        cols * hex_size * 3 // 2 + offset_x * 2,
-        rows * hex_size * math.sqrt(3) + offset_y * 2
-    )
-    screen = pygame.display.set_mode(screen_size)
-
-
-    while True:
+    while not terminated:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
+                terminated = True
 
-        screen.fill((255, 255, 255))
-        grid_draw(screen, grid, hex_size)
+        screen.fill((0, 0, 0))
+
+        for i in range(min(hexagon_index + 1, len(hexagons))):
+            hexagons[i].update()
+
+        render(screen, hexagons[:hexagon_index + 1])
+        clock.tick(5)
         pygame.display.flip()
 
-    pygame.quit()
+        if hexagon_index < len(hexagons):
+            hexagon_index += 1
+
+        if hexagon_index == len(hexagons):
+            pygame.time.delay(2000)
+
+    pygame.display.quit()
+
+
+if __name__ == "__main__":
+    main()
