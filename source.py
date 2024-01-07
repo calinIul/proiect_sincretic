@@ -35,14 +35,14 @@ def create_hexagon(position, radius=50, flat_top=False) -> HexagonTile:
     return hexagon
 
 
-def init_hexagons(center=None, n=50, flat_top=False) -> List[HexagonTile]:
+def init_hexagons(center=None, n=20, flat_top=False) -> List[HexagonTile]:
     if center is None:
         screen_width, screen_height = pygame.display.get_surface().get_size()
         center_x, center_y = screen_width // 2, screen_height // 2
         center = create_hexagon(position=(center_x, center_y), flat_top=flat_top)
 
     hexagons = [center]
-    added = 0
+    added = 1
     i = 0
 
     for _ in range(n):
@@ -76,21 +76,14 @@ def render(screen, hexagons):
     for hexagon in hexagons:
         hexagon.render(screen)
 
-    # mouse_pos = pygame.mouse.get_pos()
-    # colliding_hexagons = [
-    #     hexagon for hexagon in hexagons if hexagon.collide_with_point(mouse_pos)
-    # ]
-    # for hexagon in colliding_hexagons:
-    #     for neighbour in hexagon.compute_neighbours(hexagons):
-    #         neighbour.render_highlight(screen, border_colour=(100, 100, 100))
-    #     hexagon.render_highlight(screen, border_colour=(0, 0, 0))
+
     pygame.display.flip()
 
 
 def main():
 
     pygame.init()
-    screen = pygame.display.set_mode((1280, 720))
+    screen = pygame.display.set_mode((600, 400))
     clock = pygame.time.Clock()
     hexagons = init_hexagons(flat_top=True)
     terminated = False
