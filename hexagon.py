@@ -15,17 +15,9 @@ class HexagonTile:
     radius: float
     position: Tuple[float, float]
     colour: Tuple[int, ...]
-    highlight_offset: int = 3
-    max_highlight_ticks: int = 15
 
     def __post_init__(self):
         self.vertices = self.compute_vertices()
-        self.highlight_tick = 0
-
-    def update(self):
-
-        if self.highlight_tick > 0:
-            self.highlight_tick -= 1
 
     def compute_vertices(self) -> List[Tuple[float, float]]:
 
@@ -47,9 +39,7 @@ class HexagonTile:
 
         return [hexagon for hexagon in hexagons if self.is_neighbour(hexagon)]
 
-    def collide_with_point(self, point: Tuple[float, float]) -> bool:
 
-        return math.dist(point, self.centre) < self.minimal_radius
 
     def is_neighbour(self, hexagon: HexagonTile) -> bool:
 
@@ -58,13 +48,8 @@ class HexagonTile:
 
     def render(self, screen) -> None:
 
-        pygame.draw.polygon(screen, self.highlight_colour, self.vertices)
+        pygame.draw.polygon(screen, self.colour, self.vertices)
 
-    def render_highlight(self, screen, border_colour) -> None:
-
-        self.highlight_tick = self.max_highlight_ticks
-
-        pygame.draw.aalines(screen, border_colour, closed=True, points=self.vertices)
 
     @property
     def centre(self) -> Tuple[float, float]:
@@ -76,13 +61,6 @@ class HexagonTile:
     def minimal_radius(self) -> float:
 
         return self.radius * math.cos(math.radians(30))
-
-    @property
-    def highlight_colour(self) -> Tuple[int, ...]:
-
-        offset = self.highlight_offset * self.highlight_tick
-        brighten = lambda x, y: x + y if x + y < 255 else 255
-        return tuple(brighten(x, offset) for x in self.colour)
 
 
 class FlatTopHexagonTile(HexagonTile):
